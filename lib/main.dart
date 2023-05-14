@@ -56,6 +56,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
         setState(() {
           devicesList.add(scanResult.device);
         });
+        print("this is result from scan $scanResult.device");
       }
     });
   }
@@ -63,13 +64,19 @@ class _BluetoothPageState extends State<BluetoothPage> {
   void connectToDevice(BluetoothDevice device) async {
     scanSubscription?.cancel();
     try {
+      print("before connect");
       await device.connect();
+      print("after connect");
+      await device.discoverServices();
       setState(() {
         connectedDevice = device;
       });
       discoverServices(device);
     } catch (e) {
+      
       print(e.toString());
+      print("not connected");
+
     }
   }
 
@@ -117,24 +124,15 @@ class _BluetoothPageState extends State<BluetoothPage> {
       ),
       body: Column(
         children: <Widget>[
-          connectedDevice != null
-              ? ListTile(
-                  title: Text(connectedDevice!.name ?? ''),
-                  subtitle: Text(connectedDevice!.id.toString()),
-                  trailing: IconButton(
-                    icon: Icon(Icons.bluetooth_disabled),
-                    onPressed: disconnectFromDevice,
-                  ),
-                )
-              : SizedBox(),
           Expanded(
             child: ListView.builder(
               itemCount: devicesList.length,
               itemBuilder: (BuildContext context, int index) {
                 BluetoothDevice device = devicesList[index];
+                print("Device name is $device");
                 return ListTile(
-                  title: Text(device.name ?? ''),
-                  subtitle: Text(device.id.toString()),
+                  title: Text(device.name.isEmpty? device.name : "Unknown Device"),
+                  subtitle: Text(device.id.toString()), 
                   trailing: ElevatedButton(
                     child: Text('Connect'),
                     onPressed: () => connectToDevice(device),
@@ -143,6 +141,16 @@ class _BluetoothPageState extends State<BluetoothPage> {
               },
             ),
           ),
+          connectedDevice != null
+              ? ListTile(
+                  title: Text(connectedDevice!.name),
+                  subtitle: Text(connectedDevice!.id.toString()),
+                  trailing: IconButton(
+                    icon: Icon(Icons.bluetooth_disabled),
+                    onPressed: disconnectFromDevice,
+                  ),
+                )
+              : SizedBox(),
           characteristic != null
               ? Padding(
                   padding: EdgeInsets.all(16.0),
